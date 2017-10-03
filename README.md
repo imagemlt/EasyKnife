@@ -1,7 +1,7 @@
 # EasyKnife
 a simple app like CKnife
 
->本程序为mfc大作业所做，模仿CKnife项目。限于本人水平仅支持linux+php+mysql架构，界面采用CDHTMLDIALOG实现，基于jquery easyui。
+>本程序为mfc大作业所做，模仿[CKnife项目](https://github.com/Chora10/Cknife)。限于本人水平仅支持linux+php+mysql架构，界面采用CDHTMLDIALOG实现，基于jquery easyui。
 
 ## 依赖：
 * Visual Studio 2015
