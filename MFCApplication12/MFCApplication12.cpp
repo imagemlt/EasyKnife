@@ -104,3 +104,4 @@ BOOL CMFCApplication12App::InitInstance()
 	return FALSE;
 }
 
+

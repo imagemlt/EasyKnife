@@ -1,21 +1,716 @@
 <HTML>
 <HEAD>
 <meta http-equiv="Content-Type" content="text/html; charset=gb2312"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="keywords" content="jquery,ui,easy,easyui,web">
+    <meta name="description" content="easyui help you build your web page easily!">
+    <title>jQuery EasyUI Demo</title>
+    <link rel="stylesheet" type="text/css" href="http://www.jeasyui.net/Public/js/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="http://www.jeasyui.net/Public/js/easyui/themes/icon.css">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+    <script type="text/javascript" src="http://www.jeasyui.net/Public/js/easyui/jquery.easyui.min.js"></script>
+    <script src="https://cdn.bootcss.com/json2/20160511/json2.js"></script>
+     
+    <style>
+    </style>
+    <script>
+        //alert(window.external.testfun());
+        var index = 0;
+        var onedit = -1;
+        $("#dlg-database").dialog("open");
+        var str = window.external.getShells();
+        $('#dlg-database').dialog('close');
+        //alert(str);
+        var shells;
+        try{
+            shells = JSON.parse(str);
+        }
+        catch (e) {
+            shells = [];
+        }
+       
+        function addShells(jsonsetences){
+            for (var shell in shells) {
+                shells[shell].index = index;
+                $('#dg').datagrid('insertRow', {
+                    index:index,	// index start with 0
+                    row: shells[shell]
+                });
+                //alert(index);
+                index++;
+            }
+        }
+        
+        function newUser() {
+            $('#dlg').dialog('open');
+            $('#fm').form('clear');
+           // url = 'save_user.php';
+        }
+        function editUser() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#dlg').dialog('open');
+                $('#fm').form('load', row);
+                onedit = row.index;
+               // url = 'update_user.php?id=' + row.id;
+            }
+        }
+        function saveUser() {
+            if (onedit == -1) {
+                var cus;
+                try{
+                    cus=JSON.parse($('#custom').val());
+                }
+                catch (e) {
+                    cus = {};
+                }
+                var shell = {
+                    address: $('#address').val(),
+                    editTime: new Date().toLocaleString(),
+                    pass: $('#pass').val(),
+                    method: $('#method').val(),
+                    custom:cus
+                }
+                $('#dg').datagrid('insertRow', {
+                    index:index ,	
+                    row:shell
+                });
+                window.external.addShell(JSON.stringify(shell));
+                shells.push(shell);
+                window.external.updatesetting(JSON.stringify(shells));
+                index++;
+            }
+            else {
+                var cus;
+                try {
+                    cus = JSON.parse($('#custom').val());
+                }
+                catch (e) {
+                    cus = {};
+                }
+                $('#dg').datagrid('deleteRow', onedit);
+                $('#dg').datagrid('insertRow', {
+                    index: onedit,	// index start with 0
+                    row: {
+                        address: $('#address').val(),
+                        editTime: new Date().toLocaleString(),
+                        pass: $('#pass').val(),
+                        method: $('#method').val(),
+                        custom:cus
+                    }
+                });
+                shells[index] = {
+                    index: onedit,
+                    address: $('#address').val(),
+                    editTime: new Date().toLocaleString(),
+                    pass: $('#pass').val(),
+                    method: $('#method').val(),
+                    custom: cus
+                }
+                window.external.updatesetting(JSON.stringify(shells));
+                window.external.reloadShell(index,JSON.stringify(shells[index]));
+                onedit = -1;
+            }
+            $('#dlg').dialog('close')
+        }
+        function addFile(){
+            $('#filetree').tree({
+                data: [{
+                    text: 'Item1',
+                    state: 'closed',
+                    children: [{
+                        text: 'Item11'
+                    },{
+                        text: 'Item12'
+                    }]
+                },{
+                    text: 'Item2'
+                }]
+            });
+        }
+        function removeUser() {
+            var row = $('#dg').datagrid('getSelected');
+            //console.log(JSON.stringify(row));
+            if (row) {
+                $.messager.confirm('Confirm', 'Are you sure you want to remove this user?', function (r) {
+                    if (r) {
+                        //console.log(JSON.stringify(row));
+                        window.external.rm($('#dg').datagrid('getRowIndex', row));
+                        shells.splice($('#dg').datagrid('getRowIndex', row), 1);
+                        window.external.updatesetting(JSON.stringify(shells));
+                        $('#dg').datagrid('deleteRow', $('#dg').datagrid('getRowIndex', row));
+                    }
+
+                });
+            }
+        }
+        
+        function toggleConsole() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                addTab(row.address, "Console", $('#dg').datagrid('getRowIndex', row));
+            }
+        }
+        function toggleDatabase() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                addTab(row.address, "Database", $('#dg').datagrid('getRowIndex', row));
+            }
+        }
+        function toggleFile() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                addTab(row.address, "FileManager", $('#dg').datagrid('getRowIndex', row));
+            }
+        }
+        function newFile(id) {
+            $("#dlg-file-"+id).dialog('open');
+            $("#fm-file-"+id).form('clear');
+        }
+        function uploadFileCallback(id,filename,destdir) {
+           window.external.uploadfile(id, filename, destdir)
+                $.messager.alert("Message", "开始上传 "+filename+" 到 "+destdir);
+
+        }
+        function uploadFile(id) {
+            var filename = $("#file-"+id).val();
+            t = filename.split("\\");
+            if ($("#filedg-" + id).attr("basedir").substr)
+            updir = $("#filedg-" + id).attr("basedir") + "/" + filename.split("\\")[filename.split("\\").length - 1];
+            filename = filename.replace(/\\/g, "/");
+            setTimeout("uploadFileCallback(" + id + ",\"" + filename + "\",\"" + updir + "\")", 20);
+            $("#dlg-file").dialog('close');
+
+        }
+        function downFileCallback(id, filename, downname) {
+            window.external.downloadfile(id, filename, downname)
+           $.messager.alert("message", "开始下载文件 "+filename+" 到 "+downname);
+
+        }
+        function downFile(id) {
+            var row = $("#filedg-" + id).datagrid('getSelected');
+            var downname = row.filename.split('/')[row.filename.split('/').length - 1];
+            var val=$("#downfile-" + id).val();
+            index = val.lastIndexOf('\\');
+            val = val.substring(0, index);
+            var downdir = val.replace(/\\/g, "/");
+            setTimeout("downFileCallback(" + id + ",\"" + row.filename + "\",\"" + downdir + "/" + downname + "\")", 20);
+        }
+        function toggleDownFile(id) {
+            var row = $("#filedg-" + id).datagrid('getSelected');
+            if (row) {
+                $("#download-dlg-" + id).dialog("open").dialog('setTitle', '下载文件');
+                $("#download-fm-" + id).form('clear');
+            }
+        }
+        function execsql(id) {
+            var db = $("#execdb-" + id).val();
+            var sql = $("#sql-" + id).val();
+            $("#dlg-database").dialog("open");
+            var sqlresponce = window.external.execsql(id, db, sql);
+            $("#dlg-database").dialog("close");
+            try{
+                responce = JSON.parse(sqlresponce);
+                if (responce.length < 1) {
+                    $.messager.alert("message", "执行成功，该sql语句无返回值");
+                }
+                else {
+                    var col = new Array();    
+                    for (t in responce[0]) {
+                        //alert(t);
+                        col.push({
+                            field: t,
+                           title: t,
+                           width: 30,
+                            align: 'left'
+                        });
+                    }
+                    //alert(JSON.stringify(col));
+                    var columns = new Array();
+                    columns.push(col);
+                    $("#dg-database-" + id).datagrid({
+                        width: 'auto',
+                        columns:columns
+                    });
+                   // alert(1);
+                    var dex = 0;
+                    $('#dg-database-' + id).datagrid('loadData', { total: 0, rows: [] });
+                    for (m in responce) {
+                        //alert(responce[m].Database);
+                        $("#dg-database-" + id).datagrid('insertRow', {
+                            index: dex,
+                            row: responce[m]
+                        });
+                        dex++;
+                    }
+                }
+            }
+            catch (e) {
+                $.messager.alert("error", e.message + ":" + sqlresponce);
+            }
+            $("#dlg-exec-sql-" + id).dialog("close");
+        }
+        function newRecord(id) {
+            $("#dlg-exec-sql-" + id).dialog("open").dialog("setTitle", "执行sql语句");
+            $("#fm-exec-sql-" + id).form("clear");
+        }
+        function FileListInit(id) {
+            // alert(id);
+            $("#dlg-database").dialog("open");
+            var filelist = window.external.getfilelist(id, "");
+            $("#dlg-database").dialog("close");
+         try{
+            var list = JSON.parse(filelist);
+            var fist = new Array();
+            var dirtree = new Array();
+            dirid = 0;
+            var dex = 0;
+            for (m in list) {
+                if (list[m].filetype == "dir" && list[m].hasOwnProperty("filename")) {
+                    dirtree.push({
+                        id: dirid,
+                        text: list[m].filename,
+                        state: "closed",
+                        children:[]
+                    })
+                    dirid++;
+                }
+               // alert(JSON.stringify(list[m]));
+                if (list[m].hasOwnProperty("filename"))
+                    $("#filedg-" + id).datagrid("insertRow", {
+                        index:dex,
+                        row:list[m]});
+                dex++;
+            }
+            $("#filetree-" + id).tree({
+                data:dirtree
+            })
+            //alert("191");
+             //alert(m[0]);
+            //for (t in list[0]) { alert("list[0]["+t+"]="+list[0][t]);};
+            $("#filedg-" + id).attr("basedir", list[0].filename);
+            //alert($("#filedg-" + id).attr("basedir"));
+            $("#filetree-" + id).tree({
+                onClick: function (node) {
+
+                    try {
+                        $("#dlg-database").dialog("open");
+                        data = window.external.getfilelist(id, node.text + '/');
+                        $("#dlg-database").dialog("close");
+                        //alert(data);
+                        list = JSON.parse(data);
+                       
+                        $('#filedg-'+id).datagrid('loadData', { total: 0, rows: [] });
+                        for (m in list) {
+                            if (list[m].filetype == "dir" && list[m].hasOwnProperty("filename")) {
+                                $("#filetree-" + id).tree('append', {
+                                    parent: node.target,
+                                    data: [{
+                                        id: dirid,
+                                        text: list[m].filename,
+                                        state: "closed",
+                                        children: []
+                                    }]
+                                });
+                                
+                            }
+                            if (list[m].hasOwnProperty("filename"))
+                                $("#filedg-" + id).datagrid("insertRow", {
+                                    index: dex,
+                                    row: list[m]
+                                });
+                        }
+                        $("#filedg-" + id).attr("basedir", list[0].filename);
+                    }
+                    catch (e) {
+                        $.messager.alert("error", e.message);
+                    }
+                    }
+            });
+            $('#filedg-' + id).datagrid({
+                onDblClickRow: function (index, row) {
+                    if (row.filetype == "dir") {
+                        try {
+                            $("#dlg-database").dialog("open");
+                            data = window.external.getfilelist(id, row.filename + '/');
+                            $("#dlg-database").dialog("close");
+                            //alert(data);
+                            list = JSON.parse(data);
+                            $('#filedg-' + id).datagrid('loadData', { total: 0, rows: [] });
+                            var dirtree = new Array();
+                            var dirid = 0;
+                            for (m in list) {
+                                if (list[m].filetype == "dir" && list[m].hasOwnProperty("filename")) {
+                                    dirtree.push({
+                                        id: dirid,
+                                        text: list[m].filename,
+                                        state: "closed",
+                                        children: []
+                                    })
+                                    dirid++;
+
+                                }
+                                if (list[m].hasOwnProperty("filename"))
+                                    $("#filedg-" + id).datagrid("insertRow", {
+                                        index: dex,
+                                        row: list[m]
+                                    });
+                            }
+                            $("#filetree-" + id).tree({
+                                data: dirtree
+                            })
+                            $("#filedg-" + id).attr("basedir", list[0].filename);
+                        }
+                        catch (e) {
+                            $.messager.alert("error", e.message);
+                        }
+                    }
+                }
+            })
+           // alert("211");
+        }
+            catch (e) {
+                $.messager.alert("error!", filelist);
+            }
+
+            
+        }
+        function initFilelist(id){
+            return function(){
+                FileListInit(id);
+            }
+        }
+        function Keydown(id) {
+            this.obj = $("#console-" + id);
+            this.id = id;
+            this.commandBegin = 0;
+            this.commandEnd = 0;
+            this.markpoint = "";
+        }
+        Keydown.prototype.init = function () {
+            var me = this;
+            var pwd = window.external.execCom(this.id, 'pwd');
+            pwd += "# ";
+            pwd = pwd.replace(/\n/g, "");
+            me.commandBegin += pwd.length;
+            me.markpoint = pwd;
+            this.obj.append(pwd);
+            me.commandEnd = me.commandBegin;
+            this.obj.keyup(function (e) {
+                me.keydown();
+            })
+        }
+        
+        Keydown.prototype.keydown = function () {
+            s = this.obj.val().charAt(this.obj.val().length-1);
+            if (s=='\n') {
+                command = this.obj.val().substring(this.commandEnd, this.obj.val().length - 1);
+                if (command.replace(/(^s*)|(s*$)/g, "").length > 0 && command!='\n') {
+                    var callback = window.external.execCom(this.id, command);
+                    callback = callback.replace(/\n/g, "\r\n");
+                    this.obj.val(this.obj.val()+callback);
+                    if (command.search(/cd/) != -1) {
+                        var pwd = window.external.execCom(this.id, 'pwd');
+                        pwd = pwd.replace(/\n/g, "");
+                        pwd += "# ";
+                        this.markpoint = pwd;
+                    }
+                    this.obj.val(this.obj.val()+this.markpoint);
+                }
+                this.commandEnd = this.obj.val().length;
+                setTimeout("$('textarea').scrollTop(10000000)", 100);
+            }
+        }
+        function setDb(id) {
+            shells[id].host = $("#host-" + id).val();
+            shells[id].username = $("#username-" + id).val();
+            shells[id].dbpassword = $("#dbpassword-" + id).val();
+            shells[id].db = $("#db-" + id).val();
+            shells[id].port =$("#port-" + id).val();
+            window.external.setdb(id, shells[id].host, shells[id].username, shells[id].dbpassword, shells[id].db, shells[id].port);
+            $("#dlg-database-" + id).dialog('close');
+        }
+		function addTab(title, type,id){
+			if ($('#tt').tabs('exists', title+"-"+type)){
+				$('#tt').tabs('select', title+"-"+type);
+			} else {
+			    switch (type) {
+			        case "FileManager":{
+			            var content = "<div class=\"easyui-layout\" fit=\"true\">" +
+		"<div region=\"west\" split=\"true\" title=\"文件列表\"  style='width:300px'>" +
+    	"<ul class=\"easyui-tree\" id='filetree-" + id + "'>" +
+        "</ul>" +
+		"</div>" +
+		"<div id=\"content\" region=\"center\" title=\"文件\">" +
+           "<table id=\"filedg-" + id + "\"  basedir=\"\" title=\"My Users\" class=\"easyui-datagrid\" fit=\"true\" style=\"\"\
+                   \
+                   toolbar=\"#toolbar-file-"+id+"\" \
+                   rownumbers=\"true\" fitColumns=\"true\" singleSelect=\"true\">\
+                <thead>\
+                    <tr>\
+                        <th field=\"filename\" width=\"155\">文件名</th>\
+                        <th field=\"filetype\" width=\"15\">类型</th>\
+						<th field=\"filesize\" width=\"15\">大小</th>\
+						<th field=\"fileperms\" width=\"15\">属性</th>\
+                    </tr>\
+                </thead>\
+            </table>\
+            <div id=\"toolbar-file-"+id+"\">\
+                <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-add\" plain=\"true\" onclick=\"newFile("+ id + ")\">添加</a>\
+                <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-edit\" plain=\"true\" onclick=\"toggleDownFile("+ id + ")\">下载</a>\
+                <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-remove\" plain=\"true\" onclick=\"removeFile("+ id + ")\">删除</a>\
+            </div>\
+		</div>"+
+	"</div><div id=\"dlg-file-"+id+"\" class=\"easyui-dialog\" style=\"width:400px;height:280px;padding:10px 20px\"\
+         closed=\"true\" buttons=\"#dlg-file-buttons-"+id+"\">\
+        <div class=\"ftitle\">文件上传</div>\
+        <form id=\"fm-file\" method=\"post\" novalidate>\
+            <div class=\"fitem\">\
+                <label>文件名：</label>\
+                <input name=\"file\" id=\"file-"+id+"\" type=\"file\">\
+            </div>\
+            \
+        </form>\
+    </div>\
+    <div id=\"dlg-file-buttons-"+id+"\">\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-ok\" onclick=\"uploadFile("+id+")\">OK</a>\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-cancel\" onclick=\"javascript:$('#dlg-file-"+id+"').dialog('close')\">Cancel</a>\
+    </div><div id=\"download-dlg-"+id+"\" class=\"easyui-dialog\" style=\"width:400px;height:280px;padding:10px 20px\"\
+         closed=\"true\" buttons=\"#download-dlg-buttons-"+id+"\">\
+        <div class=\"ftitle\">文件下载</div>\
+        <form id=\"dowload-fm-"+id+"\" method=\"post\" novalidate>\
+            <div class=\"fitem\">\
+                <label>文件名：</label>\
+                <input name=\"file\" id=\"downfile-"+id+"\" type=\"file\">\
+            </div>\
+            \
+        </form>\
+    </div>\
+    <div id=\"download-dlg-buttons-" + id + "\">\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-ok\" onclick=\"downFile("+id+")\">OK</a>\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-cancel\" onclick=\"javascript:$('#download-dlg-" + id + "').dialog('close')\">Cancel</a>\
+    </div>";
+			            $('#tt').tabs('add', {
+			                title: title+"-"+type,
+			                content: content,
+			                closable: true
+			            });
+			            setTimeout("FileListInit("+id+")", 20);
+			            break;
+			        }
+
+			        case "Console": {
+			            var content = "<textarea id='console-"+id+"' oninput=\"alert('mdzz')\"  role='"+id+"'   style='width:100%;height:100%;margin-left:10px;margin-right:10px;margin-top:10px;border-radius:10px;'></textarea>";
+			            $('#tt').tabs('add', {
+			                title: title + "-" + type,
+			                content: content,
+			                closable: true
+			            });
+			           
+			            new Keydown(id).init();
+			            break;
+			        }
+			        case "Database": {
+			            var content = "<table id=\"dg-database-"+id+"\" title=\"数据库\" class=\"easyui-datagrid\" fit=\"true\" style=\"\"\
+                   toolbar=\"#database-toolbar"+id+"\" \
+                   rownumbers=\"true\" fitColumns=\"true\" singleSelect=\"true\">\
+                <thead>\
+                    <tr>\
+                        <th field=\"address\" width=\"80\">字段名</th>\
+                        <th field=\"editTime\" width=\"30\">字段值</th>\
+						<th field=\"editTime\" width=\"30\">属性</th>\
+                    </tr>\
+                </thead>\
+            </table>\
+            <div id=\"database-toolbar"+id+"\">\
+                <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-add\" plain=\"true\" onclick=\"newRecord("+id+")\">执行sql语句</a>\
+            </div>\
+    <div id=\"dlg-database-"+id+"\" class=\"easyui-dialog\" style=\"width:400px;height:280px;padding:10px 20px\"\
+         closed=\"true\" buttons=\"#dlg-databse-buttons-" + id + "\">\
+        <div class=\"ftitle\">数据库配置</div>\
+        <hr/>\
+        <form id=\"fm-database-"+id+"\" method=\"post\" novalidate>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">数据库地址：</label >\
+                <input name=\"host\" id=\"host-"+id+"\" style=\"display:inline-block;width:55%;\">\
+            </div>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">数据库端口：</label>\
+                <input name=\"host\" id=\"port-" + id + "\" style=\"display:inline-block;width:55%;\">\
+            </div>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">用户名：</label>\
+                <input name=\"username\" id=\"username-" + id + "\" style=\"display:inline-block;width:55%;\">\
+            </div>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">密码：</label>\
+                <input name=\"password\" id=\"dbpassword-" + id + "\" style=\"display:inline-block;width:55%;\">\
+            </div>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">数据库：</label>\
+                <input name=\"db\" id=\"db-" + id + "\" style=\"display:inline-block;width:55%;\">\
+            </div>\
+        </form>\
+    </div>\
+    <div id=\"dlg-databse-buttons-"+id+"\">\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-ok\" onclick=\"setDb("+id+")\">OK</a>\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-cancel\" onclick=\"javascript:$('#dlg-database-" + id + "').dialog('close')\">Cancel</a>\
+<div id=\"dlg-exec-sql-" + id + "\" class=\"easyui-dialog\" style=\"width:400px;height:280px;padding:10px 20px\"\
+         closed=\"true\" buttons=\"#dlg-exec-sql-buttons-"+ id + "\">\
+        <div class=\"ftitle\">执行sql</div>\
+        <hr/>\
+        <form id=\"fm-exec-sql-"+id+"\" method=\"post\" novalidate>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">数据库：</label>\
+                <textarea name=\"host\" id=\"execdb-"+ id + "\"  rows=\"3\"   style=\"vertical-align: top;display:inline-block;width:55%;\"></textarea>\
+            </div>\
+            <div class=\"fitem\" style=\"width:80%;margin-bottom:5px\">\
+                <label style=\"display:inline-block;width:40%;text-align:left\">要执行的sql语句：</label>\
+                <textarea name=\"host\" id=\"sql-" + id + "\"  rows=\"3\"   style=\"vertical-align: top;display:inline-block;width:55%;\"></textarea>\
+            </div>\
+        </form>\
+    </div>\
+    <div id=\"dlg-exec-sql-buttons-"+ id + "\">\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-ok\" onclick=\"execsql("+ id + ")\">OK</a>\
+        <a href=\"#\" class=\"easyui-linkbutton\" iconCls=\"icon-cancel\" onclick=\"javascript:$('#dlg-exec-sql-"+ id + "').dialog('close')\">Cancel</a>";
+			            $('#tt').tabs('add', {
+			                title: title + "-" + type,
+			                content: content,
+			                closable: true
+			            });
+			            if (!(shells[id].hasOwnProperty("host")&& shells[id].host!="")) {
+			                $("#dlg-database-" + id).dialog('open').dialog('setTitle', '设置mysql数据库');
+			                $("#fm-database-" + id).form('clear');
+			            }
+			            break;
+
+			        }
+                        default:;
+			    }
+			}
+		}
+		$(function () {
+		    $('#dg').datagrid({'onRowContextMenu':function (e, rowIndex, rowData) {
+		        e.preventDefault();
+		        $(this).datagrid("clearSelections");
+		        $(this).datagrid("selectRow", rowIndex);
+		        $('#mm').menu('show', {
+		            left: e.pageX,
+		            top: e.pageY
+		        });
+		    }
+		    });
+		    addShells();
+		});
+    </script>
 </HEAD>
-<BODY ID=CMFCApplication12Dlg BGCOLOR=LIGHTGREY style="font-family:MS Shell Dlg;font-size:9">
+<BODY ID=CMFCApplication12Dlg BGCOLOR=LIGHTGREY style="font-family:MS Shell Dlg;font-size:9px" oncontextmenu="self.event.returnvalue = false;">
+    <div class="easyui-tabs" fit="true" style="min-height:400px" id="tt">
+        <div title="控制面板"  style="padding:10px;">
+            <table id="dg" title="My Users" class="easyui-datagrid" fit="true" style=""
+                   
+                   toolbar="#toolbar" 
+                   rownumbers="true" fitColumns="true" singleSelect="true">
+                <thead>
+                    <tr>
+                        <th field="address" width="80">shell地址</th>
+                        <th field="editTime" width="30">添加时间</th>
+                    </tr>
+                </thead>
 
-<TABLE WIDTH=100% HEIGHT=100%>
-<TR WIDTH=100% HEIGHT=45%>
-<TD ALIGN=CENTER VALIGN=BOTTOM>
-TODO: 在此放置控件。
-</TD>
-</TR>
-<TR WIDTH=100% HEIGHT=100%>
-<TD ALIGN=RIGHT VALIGN=BOTTOM>
-<BUTTON STYLE="WIDTH:100" ID="ButtonOK">确定</BUTTON>&nbsp;<BUTTON STYLE="WIDTH:100" ID="ButtonCancel">取消</BUTTON>
-</TD>
-</TR>
-</TABLE>
+            </table>
+            <div id="toolbar">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newUser()">添加</a>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="editUser()">编辑</a>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="removeUser()">删除</a>
+            </div>
+          
 
+        </div>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:400px;height:280px;padding:10px 20px"
+         closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">shell</div>
+        <hr />
+        <form id="fm" method="post" novalidate>
+            <div class="fitem" style="width:80%;margin-bottom:5px">
+                <label  style="display:inline-block;width:40%;text-align:left">Shell地址:</label>
+                <input  type="text" name="address" id="address" style="display:inline-block;width:55%;">
+            </div>
+            <div class="fitem" style="width:80%;margin-bottom:5px">
+                <label style="display:inline-block;width:40%;text-align:left">Shell密码:</label>
+                <input  type="text" name="pass" id="pass" style="display:inline-block;width:55%;" >
+            </div>
+            <div class="fitem" style="width:80%;margin-bottom:5px">
+                <label style="display:inline-block;width:40%;text-align:left">请求方法:</label>
+                <select  name="method" id="method"  style="display:inline-block;width:55%;border:1px solid antiquewhite;">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                </select>
+            </div>
+            <div class="fitem" style="width:80%;margin-bottom:5px">
+                <label style="display:inline-block;width:40%;text-align:left">自定义:</label>
+                <textarea rows="3"  name="custom" id="custom" style="vertical-align: top;display:inline-block;width:55%;"></textarea>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">Save</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">Cancel</a>
+    </div>
+    
+    <div id="mm" class="easyui-menu" >
+        <div data-options="name:'console'" onclick="toggleConsole()">终端管理</div>
+        <div data-options="name:'file',iconCls:'icon-save'" onclick="toggleFile()">文件管理</div>
+        <div data-options="name:'mysql',iconCls:'icon-print'" onclick="toggleDatabase()">数据库管理</div>
+        <div class="menu-sep"></div>
+        <div data-options="name:'exit'">Exit</div>
+    </div>
+    <div id="dlg-file" class="easyui-dialog" style="width:400px;height:280px;padding:10px 20px"
+         closed="true" buttons="#dlg-file-buttons">
+        <div class="ftitle">文件</div>
+        <form id="fm-file" method="post" novalidate>
+            <div class="fitem">
+                <label>文件名：</label>
+                <input name="file" id="file" type="file">
+            </div>
+            
+        </form>
+    </div>
+    <div id="dlg-file-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="uploadFile()">OK</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-file').dialog('close')">Cancel</a>
+    </div>
+    <div id="dlg-database" class="easyui-dialog" style="width:400px;height:280px;padding:10px 20px"
+         closed="true" buttons="#dlg-database-buttons">
+        <div class="ftitle">数据库配置</div>
+        <form id="fm" method="post" novalidate>
+            <div class="fitem">
+                <label>数据库地址：</label>
+                <input name="host" id="host">
+            </div>
+            <div class="fitem">
+                <label>用户名：</label>
+                <input name="username" id="username">
+            </div>
+            <div class="fitem">
+                <label>密码：</label>
+                <input name="password" id="password">
+            </div>
+            <div class="fitem">
+                <label>数据库：</label>
+                <input name="db" id="db">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-databse-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="setDb()">OK</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-database').dialog('close')">Cancel</a>
+    </div>
+
+
+        <script>
+
+        </script>
 </BODY>
 </HTML>

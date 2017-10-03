@@ -33,6 +33,15 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="cryptohelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="curlhelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WebShell.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFCApplication12.cpp">
@@ -42,6 +51,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cryptohelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="curlhelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WebShell.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
