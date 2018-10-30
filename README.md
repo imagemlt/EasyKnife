@@ -3,6 +3,8 @@ a simple app like CKnife
 
 >本程序为mfc大作业所做，模仿[CKnife项目](https://github.com/Chora10/Cknife)。限于本人水平仅支持linux+php+mysql架构，界面采用CDHTMLDIALOG实现，基于jquery easyui。
 
+>个人不是很喜欢mfc所以目前此项目已搁置,如果大佬们真的想跑一跑的话目前版本可能有一些bug，可以用[WebshellManager](https://github.com/imagemlt/WebshellManager)中的核心代码替换这里面的代码来跑
+
 ## 依赖：
 * Visual Studio 2015
 * jsoncpp
